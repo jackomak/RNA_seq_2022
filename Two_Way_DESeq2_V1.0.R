@@ -43,7 +43,7 @@ normcounts <- counts(ddsDE, normalized = T )
 write.csv(normcounts, normalisedMatrixOutputFilename)
 #Run DESEQ2 on normalized counts file.
 resultsNames(ddsDE)
-res <- results(ddsDE, contrast=c(paste0(experimentalCondition), group1, group2))
+res <- results(ddsDE, contrast=c(GenotypeDay, group1, group2))
 statsDE <- res[order(res$padj),]
 write.csv(statsDE, deseqResultsFilename)
 
