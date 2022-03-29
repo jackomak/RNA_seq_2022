@@ -1,6 +1,15 @@
-##Three Way Data Comparison by visualizing log2fold changes against a control.
+##This script will take 3 variables (three seperate genotypes from a rawcounts matrix file, create a normalised counts matrix and compare changes in expression
+##between two genotypes and the specified control. As this script generates two log2foldchange values. Changes in expression of wanted genes compared to a control
+##can be specified and visualised using GG plot.
 
 ###LIBRARIES###
+library(ggplot2)
+library(reshape2)
+library(DESeq2)
+library(pheatmap)
+library(dplyr)
+
+###VARIABLES TO SET###
 rawdata <- read.csv("<RAWCOUNTS_FILE>", header = T, row.names = 1 ) # <- Rawcounts matrix file name.
 info <- read.csv("<INFO_FILE>", header = T, row.names = 1) # <- Info matrix file name.
 experimentalGroup <- "<EXPERIMENTAL_NAME>" # <- What does the rawcounts file contain? eg. "All_WD_SAMPLES".
