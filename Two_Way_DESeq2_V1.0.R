@@ -23,11 +23,11 @@ minLogFoldChange <- 1.4 #1.4 Recommended.
 minPvalue <- 0.05 #0.05 Recommended.
 
 ###FILENAME GENERATOR###
-normalisedMatrixOutputFilename <- paste0(experimentalGroup,"_Normalised_Counts.csv") # <- May need to specify output file name for normalised counts matrix.
-deseqResultsFilename <- paste0(group1,"_V_",group2,"_DESEQ_Results.csv")
-sigFoldUpFilename  <- paste0(group1,"_V_",group2,"_Significant_Upregulated_Genes.csv")
-sigFoldDownFilename <- paste0(group1,"_V_",group2,"_Significant_Downregulated_Genes.csv")
-allSigGenesFilename <- paste0(group1,"_V_",group2,"_All_Significant_Genes.csv")
+normalisedMatrixOutputFilename <- paste0(groupA,"_V_",groupB,"_Normalised_Counts.csv") # <- May need to specify output file name for normalised counts matrix.
+deseqResultsFilename <- paste0(groupA,"_V_",groupB,"_DESEQ_Results.csv")
+sigFoldUpFilename  <- paste0(groupA,"_V_",groupB,"_Significant_Upregulated_Genes.csv")
+sigFoldDownFilename <- paste0(groupA,"_V_",groupB,"_Significant_Downregulated_Genes.csv")
+allSigGenesFilename <- paste0(groupA,"_V_",groupB,"_All_Significant_Genes.csv")
 
 ###RUN DESEQ2###
 #Create DESeq data set using the two reference files outlined above.
@@ -43,7 +43,7 @@ normcounts <- counts(ddsDE, normalized = T )
 write.csv(normcounts, normalisedMatrixOutputFilename)
 #Run DESEQ2 on normalized counts file.
 resultsNames(ddsDE)
-res <- results(ddsDE, contrast=c(GenotypeDay, group1, group2))
+res <- results(ddsDE, contrast=c("GenotypeDay", groupB, groupA))
 statsDE <- res[order(res$padj),]
 write.csv(statsDE, deseqResultsFilename)
 
