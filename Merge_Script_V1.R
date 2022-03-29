@@ -1,22 +1,31 @@
 ##Script To Merge Databases produced using DEG_finder V2 - Will identify mutuallly differential genes between two different comparisons. It will help with narrowing down relevent hits#
 
+###LIBRARIES###
 library(ggplot2)
 library(reshape2)
 library(DESeq2)
 library(pheatmap)
 
-#Read In upregualted Genes#
-upreg1 <- read.csv("Significant_Upregulated_Genes_ptcG4_v_7AGFP_SG_D8.csv" , row.names = 1)
-upreg2 <- read.csv("Significant_Upregulated_Genes_ptcG4_v_Fer12_SG_D8.csv" , row.names = 1)
+###VARIABLES TO BE SET###
+upregFile1 <- "<UPREGULATED_GENES_GENOTYPE_1.csv>"
+upregFile2 <- "<UPREGULATED_GENES_GENOTYPE_2.csv>"
+downRefFile1 <- "<DOWNREGULATED_GENES_GENOTYPE_1.csv">
+downRegFile2 <- "<DOWNREGULATED_GENES_GENOTYPE_2.csv">
+upregOutput <- "<MDEG_UPREGULATED_OUTPUT_FILENAME">
+downregOutput <- "<MDEG_DOWNREGULATED_OUTPUT_FILENAME>"
 
-#Read In Downregulated Genes#
-downreg1 <- read.csv("Significant_Downregulated_Genes_ptcG4_v_7AGFP_SG_D8.csv", row.names = 1)
-downreg2 <- read.csv("Significant_Downregulated_Genes_ptcG4_v_Fer12_SG_D8.csv", row.names = 1)
+###READ IN UPREGULATED GENES###
+upreg1 <- read.csv(upregFile1 , row.names = 1)
+upreg2 <- read.csv(upregFile2 , row.names = 1)
 
-#Merge Upregualted  Data#
+###READ IN DOWNREGULATED GENES###
+downreg1 <- read.csv(downregFile1, row.names = 1)
+downreg2 <- read.csv(downregFile2, row.names = 1)
+
+###MERGE UPREGULATED DATA###
 upregMerged <- merge(x = upreg2, y = upreg1, by = 0)
-write.csv(upregMerged, "Fer12_7AGFP_SG_D8_Merged_Upregulated_Genes.csv")
+write.csv(upregMerged, upregOutput)
 
-#Merge Downregualted Data#
+###MERGE DOWNREGULATED DATA###
 downregMerged <- merge(x = downreg1, y = downreg2, by = 0)
-write.csv(downregMerged, "Fer12_7AGFP_SG_D8_Merged_Downregulated_Genes.csv")
+write.csv(downregMerged, downregOutput)
