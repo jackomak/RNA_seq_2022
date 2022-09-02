@@ -14,7 +14,7 @@ normExp <- read.csv("ptcG4_7AGFP_D8_normalized_counts.csv", row.names = 1)
 #Remove N/A P values#
 statsDE <- na.omit(statsDE)
 
-###Data Filtering###
+#data filtering#
 
 #Remove all rows of statsDE with a Pvalue of less than X and rowsum of less than 50.
 moreThanFifty <- subset(statsDE, baseMean >50)
