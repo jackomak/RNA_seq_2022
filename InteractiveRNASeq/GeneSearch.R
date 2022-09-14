@@ -11,7 +11,7 @@ library(circlize)
 #VARIABLES TO SET#
 geneList <- c("FBgn0015399", "FBgn0033395", "FBgn0026562") #A list of genes to generate a heatmap for.
 tissuesForHeatmap <- c("Wingdisc", "Salivarygland", "Brain") #The tissues to include in the heatmap.
-genotypesForAnalysis <- c("PtcG4_D6", "Yw_D5", "RasYki_D5", "RasYki_D8", "Fer12OG_D6", "Fer12OG_D8", "Fer12WT_D6") #The genotypes to include in the heatmap.
+genotypesForAnalysis <- c("PtcG4_D6", "Yw_D5", "RasYki_D5", "RasYki_D8", "Fer12OG_D6", "Fer12OG_D8", "Fer12WT_D6", "ImpL2i_D6", "ImpL2i_D8") #The genotypes to include in the heatmap.
 
 
 #Read in raw log fold change database
