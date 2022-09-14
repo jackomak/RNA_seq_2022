@@ -1,8 +1,16 @@
+#Shiny packages ----
 library(shiny)
+library(shinythemes)
+
+#core packages for data visualization ----
+library(ComplexHeatmap)
+library(tidyverse)
+library(readxl)
+library(circlize)
 
 #Define UI ----
 ui <- fluidPage(
-  theme = "Install Shiny theme and select package", # Complete
+  theme = shinytheme("united"),
   titlePanel("RNA-Seq Heatmap Generator"),
   sidebarLayout(
     sidebarPanel(h2("Configuration Tab:"),
@@ -17,11 +25,11 @@ ui <- fluidPage(
                                                        "ImpL2 RNAi Day 8"),
                                     choiceValues = list("RasYki_D5",
                                                         "RasYki_D8",
-                                                        "Fer12OGD6",
-                                                        "Fer12OGD8",
-                                                        "Fer12WTD6",
-                                                        "ImpL2iD6",
-                                                        "ImpL2iD8")),
+                                                        "Fer12OG_D6",
+                                                        "Fer12OG_D8",
+                                                        "Fer12WT_D6",
+                                                        "ImpL2i_D6",
+                                                        "ImpL2i_D8")),
                   checkboxGroupInput(inputId = "tissueSelector",
                                      label = "Select tissues for analysis:",
                                      choiceNames = list("Wing disc",
@@ -30,22 +38,100 @@ ui <- fluidPage(
                                      choiceValues = list("Wingdisc",
                                                          "Salivarygland",
                                                          "Brain")),
-                 actionButton(inputId = "Generate",
-                              label = "Generate")),
+                  textAreaInput(inputId = "geneList", 
+                               label = "Enter Gene List:", 
+                               placeholder = "Fbgn0000123...",
+                               value = NULL,
+                               height = 200,
+                               cols = 1),
+                  actionButton(inputId = "Generate",
+                              label = "generate")),
     mainPanel(
-      h1("I am a header"),
-      h3("I am a smaller header"))
+      h1("RNA-seq Heatmap:"),
+      plotOutput(outputId = "mainHeatmap")),
   ))
 
 
 #Define server logic ----
 server <- function(input, output) {
+  output$mainHeatmap <- renderPlot({
+    
+    #Variables to define.
+    geneList <- c("FBgn0015399", "FBgn0033395", "FBgn0026562") #A list of genes to generate a heatmap for.
+    tissuesForHeatmap <- as.list(input$tissueSelector) #The tissues to include in the heatmap.
+    genotypesForAnalysis <- as.list(input$genotypeSelector) #The genotypes to include in the heatmap.
+    
+    #Read in raw data from external excel file.
+    wdLfcTable <- read_excel("All_Tissues_LFC_Database.xlsx", sheet = 1)
+    wdLfcTable <- column_to_rownames(wdLfcTable, var = "GeneID")
+    
+    sgLfcTable <- read_excel("All_Tissues_LFC_Database.xlsx", sheet = 2)
+    sgLfcTable <- column_to_rownames(sgLfcTable, var = "GeneID")
+    
+    bLfcTable <- read_excel("All_Tissues_LFC_Database.xlsx", sheet = 3)
+    bLfcTable <- column_to_rownames(bLfcTable, var = "GeneID")
+    
+    #Filter data sets to only include rows that user has specified in "genelist" variable.
+    wdLfcTable <- wdLfcTable[rownames(wdLfcTable) %in% geneList, ]
+    sgLfcTable <- sgLfcTable[rownames(sgLfcTable) %in% geneList, ]
+    bLfcTable <- bLfcTable[rownames(bLfcTable) %in% geneList, ]
+    
+    #Remove unwanted tissue datasets#
+    genotypesForAnalysis <- append(genotypesForAnalysis, "LFC")
+    wdLfcTable <- wdLfcTable[, colnames(wdLfcTable) %in% genotypesForAnalysis]
+    sgLfcTable <- sgLfcTable[, colnames(sgLfcTable) %in% genotypesForAnalysis]
+    bLfcTable <- bLfcTable[, colnames(bLfcTable) %in% genotypesForAnalysis]
+    
+    #Select Which tissues to add to heatmap#
+    Wingdisc <- wdLfcTable
+    Salivarygland <- sgLfcTable
+    Brain <- bLfcTable
+    
+    #Create heatmap Color Scale.
+    colorScale <- colorRamp2(c(-3,0,3), c("blue", "white", "red"))
+    
+    #Loop to create heatmap for each tissue.
+    heatmapList <- list()
+    for (tissue in tissuesForHeatmap) {
+      
+      #Create normalised count level annotation.
+      ncValues <- get(as.name(tissue))[, colnames(get(as.name(tissue))) == "LFC"]
+      rowAnnotation <- rowAnnotation(LFC = anno_barplot(ncValues), border = TRUE)
+      
+      #Create core heatmap database.
+      coreHeatmap <- get(as.name(tissue))[, colnames(get(as.name(tissue))) != "LFC"]
+      
+      #Plot heatmap.
+      heatmap <- Heatmap(as.matrix(coreHeatmap),
+                         col = colorScale,
+                         column_title = tissue,
+                         row_title = "Gene",
+                         row_title_gp = gpar(col = "white"),
+                         cluster_columns = FALSE,
+                         column_title_side = "top",
+                         row_title_side = "right",
+                         name = "Log2Fold Change",
+                         row_gap = unit(1, "mm"),
+                         border = TRUE,
+                         right_annotation = rowAnnotation,
+                         column_names_rot = 90)
+      
+      heatmapList <- append(heatmap, heatmapList)
+    }
+    
+    #Plot heatmap Based on tissues provided.
+    HeatmapListLength <- length(heatmapList)
+    
+    if(HeatmapListLength == 1) {
+      plot(heatmapList[[1]])
+    } else if (HeatmapListLength == 2) {
+      plot(heatmapList[[2]] + heatmapList[[1]])
+    } else {
+      plot(heatmapList[[3]] + heatmapList[[2]] + heatmapList[[1]])
+    }
+    
+  })
   
-  
-  
-  
-  
-
 }
 
 #Run app ----
