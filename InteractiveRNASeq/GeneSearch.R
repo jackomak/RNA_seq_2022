@@ -56,18 +56,19 @@ for (tissue in tissuesForHeatmap) {
   
   #Plot heatmap.
   heatmap <- Heatmap(as.matrix(coreHeatmap),
-                                            col = colorScale,
-                                            column_title = tissue,
-                                            row_title = "Gene",
-                                            row_title_gp = gpar(col = "white"),
-                                            cluster_columns = FALSE,
-                                            column_title_side = "top",
-                                            row_title_side = "right",
-                                            name = "Log2Fold Change",
-                                            row_gap = unit(1, "mm"),
-                                            border = TRUE,
-                                            right_annotation = rowAnnotation,
-                                            column_names_rot = 90)
+    col = colorScale,
+    column_title = tissue,
+    row_title = "Gene",
+    row_title_gp = gpar(col = "white"),
+    cluster_columns = FALSE,
+    column_title_side = "top",
+    row_title_side = "right",
+    name = "Log2Fold Change",
+    row_gap = unit(1, "mm"),
+    border = TRUE,
+    right_annotation = rowAnnotation,
+    column_names_rot = 90)
+  
 heatmapList <- append(heatmap, heatmapList)
 }
 
