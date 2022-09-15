@@ -47,7 +47,7 @@ ui <- fluidPage(
                                                      "Salivarygland",
                                                      "Brain")),
                   textAreaInput(inputId = "geneList", 
-                               label = "Enter Gene List:", 
+                               label = "Enter Gene List as flybase ID's:", 
                                placeholder = "Fbgn0000123...",
                                value = NULL,
                                height = 200,
@@ -68,7 +68,9 @@ server <- function(input, output) {
     #Select which tissues to use in heatmap based on user input.
     tissuesForHeatmap <- as.list(input$tissueSelector)
     #Select which genotypes to use in heatmap based on user input.
-    genotypesForAnalysis <- as.list(input$genotypeSelector) #The genotypes to include in the heatmap.
+    genotypesForAnalysis <- as.list(input$genotypeSelector)
+    #Select whether heatmap should be built with gene names or gene symbols.
+    convertGeneIds <- 
     
     #Read in raw data from external excel file.
     wdLfcTable <- read_excel("All_Tissues_LFC_Database.xlsx", sheet = 1)
@@ -109,6 +111,15 @@ server <- function(input, output) {
       
       #Create core heatmap database.
       coreHeatmap <- get(as.name(tissue))[, colnames(get(as.name(tissue))) != "LFC"]
+      
+      #Change gene IDs to gene names if user selects.
+      if (convertGeneIds == TRUE){
+        coreHeatmap <- rownames_to_column(coreHeatmap, var = "GeneID")
+        coreHeatmap <- column_to_rownames(coreHeatmap, var = "Gene Name")
+        coreHeatmap$GeneID = NULL
+      } else {
+        coreHeatmap$`Gene Name` = NULL
+      }
       
       #Plot heatmap.
       heatmap <- Heatmap(as.matrix(coreHeatmap),
