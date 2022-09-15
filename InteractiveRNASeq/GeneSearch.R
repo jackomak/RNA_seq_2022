@@ -16,7 +16,7 @@ geneNames <- read_excel(rawData, sheet = 4)
 geneList <- c("FBgn0015399", "FBgn0033395", "FBgn0026562") #A list of genes to generate a heatmap for.
 tissuesForHeatmap <- c("Wingdisc", "Salivarygland", "Brain") #The tissues to include in the heatmap.
 genotypesForAnalysis <- c("PtcG4_D6", "Yw_D5", "RasYki_D5", "RasYki_D8", "Fer12OG_D6", "Fer12OG_D8", "Fer12WT_D6", "ImpL2i_D6", "ImpL2i_D8") #The genotypes to include in the heatmap.
-convertGeneIds <- TRUE # If TRUE geneIDs are converted to primary gene names in final heatmap.
+convertGeneIds <- FALSE # If TRUE geneIDs are converted to primary gene names in final heatmap.
 
 #Read in raw log fold change databases for each tissue.
 wdLfcTable <- read_excel(rawData, sheet = 1)
@@ -37,7 +37,7 @@ sgLfcTable <- sgLfcTable[rownames(sgLfcTable) %in% geneList, ]
 bLfcTable <- bLfcTable[rownames(bLfcTable) %in% geneList, ]
 
 #Remove unwanted tissue datasets#
-genotypesForAnalysis <- append(genotypesForAnalysis, c("LFC", "Gene Name"))
+genotypesForAnalysis <- append(genotypesForAnalysis, c("LFC", "GeneName"))
 wdLfcTable <- wdLfcTable[, colnames(wdLfcTable) %in% genotypesForAnalysis]
 sgLfcTable <- sgLfcTable[, colnames(sgLfcTable) %in% genotypesForAnalysis]
 bLfcTable <- bLfcTable[, colnames(bLfcTable) %in% genotypesForAnalysis]
@@ -63,10 +63,10 @@ for (tissue in tissuesForHeatmap) {
  
   if (convertGeneIds == TRUE){
     coreHeatmap <- rownames_to_column(coreHeatmap, var = "GeneID")
-    coreHeatmap <- column_to_rownames(coreHeatmap, var = "Gene Name")
+    coreHeatmap <- column_to_rownames(coreHeatmap, var = "GeneName")
     coreHeatmap$GeneID = NULL
   } else {
-    coreHeatmap$`Gene Name` = NULL
+    coreHeatmap$GeneName = NULL
   }
   
   #Plot heatmap.

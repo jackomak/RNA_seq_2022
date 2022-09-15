@@ -75,25 +75,28 @@ server <- function(input, output) {
     #Select which genotypes to use in heatmap based on user input.
     genotypesForAnalysis <- as.list(input$genotypeSelector)
     #Select whether heatmap should be built with gene names or gene symbols.
-    convertGeneIds <- input$convertGeneIDs
+    convertGeneIds <- input$convertGeneIDs[1]
     
-    #Read in raw data from external excel file.
+    #Read in raw log fold change databases for each tissue.
     wdLfcTable <- read_excel(rawData, sheet = 1)
+    wdLfcTable <- left_join(wdLfcTable, geneNames, by = "GeneID")
     wdLfcTable <- column_to_rownames(wdLfcTable, var = "GeneID")
     
     sgLfcTable <- read_excel(rawData, sheet = 2)
+    sgLfcTable <- left_join(sgLfcTable, geneNames, by = "GeneID")
     sgLfcTable <- column_to_rownames(sgLfcTable, var = "GeneID")
     
     bLfcTable <- read_excel(rawData, sheet = 3)
+    bLfcTable <- left_join(bLfcTable, geneNames, by = "GeneID")
     bLfcTable <- column_to_rownames(bLfcTable, var = "GeneID")
     
-    #Filter data sets to only include rows that user has specified in "genelist" variable.
+    #Filter datasets to only include rows that user has specified in "genelist" variable.
     wdLfcTable <- wdLfcTable[rownames(wdLfcTable) %in% geneList, ]
     sgLfcTable <- sgLfcTable[rownames(sgLfcTable) %in% geneList, ]
     bLfcTable <- bLfcTable[rownames(bLfcTable) %in% geneList, ]
     
     #Remove unwanted tissue datasets#
-    genotypesForAnalysis <- append(genotypesForAnalysis, "LFC")
+    genotypesForAnalysis <- append(genotypesForAnalysis, c("LFC", "GeneName"))
     wdLfcTable <- wdLfcTable[, colnames(wdLfcTable) %in% genotypesForAnalysis]
     sgLfcTable <- sgLfcTable[, colnames(sgLfcTable) %in% genotypesForAnalysis]
     bLfcTable <- bLfcTable[, colnames(bLfcTable) %in% genotypesForAnalysis]
@@ -103,10 +106,10 @@ server <- function(input, output) {
     Salivarygland <- sgLfcTable
     Brain <- bLfcTable
     
-    #Create heatmap Color Scale.
+    #Create Heatmap Color Scale.
     colorScale <- colorRamp2(c(-3,0,3), c("blue", "white", "red"))
     
-    #Loop to create heatmap for each tissue.
+    ##HEATMAP GENERATOR LOOP##
     heatmapList <- list()
     for (tissue in tissuesForHeatmap) {
       
@@ -114,16 +117,15 @@ server <- function(input, output) {
       ncValues <- get(as.name(tissue))[, colnames(get(as.name(tissue))) == "LFC"]
       rowAnnotation <- rowAnnotation(LFC = anno_barplot(ncValues), border = TRUE)
       
-      #Create core heatmap database.
+      #Create Core Heatmap database.
       coreHeatmap <- get(as.name(tissue))[, colnames(get(as.name(tissue))) != "LFC"]
       
-      #Change gene IDs to gene names if user selects.
       if (convertGeneIds == TRUE){
         coreHeatmap <- rownames_to_column(coreHeatmap, var = "GeneID")
-        coreHeatmap <- column_to_rownames(coreHeatmap, var = "Gene Name")
+        coreHeatmap <- column_to_rownames(coreHeatmap, var = "GeneName")
         coreHeatmap$GeneID = NULL
       } else {
-        coreHeatmap$`Gene Name` = NULL
+        coreHeatmap$GeneName = NULL
       }
       
       #Plot heatmap.
@@ -144,7 +146,7 @@ server <- function(input, output) {
       heatmapList <- append(heatmap, heatmapList)
     }
     
-    #Plot heatmap Based on tissues provided.
+    #Plot Heat map Based on Tissues Provided.
     HeatmapListLength <- length(heatmapList)
     
     if(HeatmapListLength == 1) {
