@@ -54,6 +54,7 @@ ui <- fluidPage(
                                cols = 1)),
     mainPanel(
       h1("RNA-seq Heatmap:"),
+      checkboxInput("convertGeneIDs", label = "Convert Flybase IDs to gene names.", value = FALSE),
       plotOutput(outputId = "mainHeatmap", height = "1000")),
   ))
 
@@ -61,6 +62,10 @@ ui <- fluidPage(
 #Define server logic ----
 server <- function(input, output) {
   output$mainHeatmap <- renderPlot({
+    
+    #Set path to raw data folder and load in geneNames conversion sheet.
+    rawData <- "ALL_Tissues_LFC_Database.xlsx"
+    geneNames <- read_excel(rawData, sheet = 4)
     
     #Search User input for genes using REGEX.
     regFilter <- regex("FBgn\\d\\d\\d\\d\\d\\d\\d", ignore_case = TRUE, )
@@ -70,16 +75,16 @@ server <- function(input, output) {
     #Select which genotypes to use in heatmap based on user input.
     genotypesForAnalysis <- as.list(input$genotypeSelector)
     #Select whether heatmap should be built with gene names or gene symbols.
-    convertGeneIds <- 
+    convertGeneIds <- input$convertGeneIDs
     
     #Read in raw data from external excel file.
-    wdLfcTable <- read_excel("All_Tissues_LFC_Database.xlsx", sheet = 1)
+    wdLfcTable <- read_excel(rawData, sheet = 1)
     wdLfcTable <- column_to_rownames(wdLfcTable, var = "GeneID")
     
-    sgLfcTable <- read_excel("All_Tissues_LFC_Database.xlsx", sheet = 2)
+    sgLfcTable <- read_excel(rawData, sheet = 2)
     sgLfcTable <- column_to_rownames(sgLfcTable, var = "GeneID")
     
-    bLfcTable <- read_excel("All_Tissues_LFC_Database.xlsx", sheet = 3)
+    bLfcTable <- read_excel(rawData, sheet = 3)
     bLfcTable <- column_to_rownames(bLfcTable, var = "GeneID")
     
     #Filter data sets to only include rows that user has specified in "genelist" variable.
