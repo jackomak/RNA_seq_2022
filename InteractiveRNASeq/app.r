@@ -29,7 +29,12 @@ ui <- fluidPage(
                                                         "Fer12OG_D8",
                                                         "Fer12WT_D6",
                                                         "ImpL2i_D6",
-                                                        "ImpL2i_D8")),
+                                                        "ImpL2i_D8"),
+                                    selected = list("RasYki_D5",
+                                                    "RasYki_D8",
+                                                    "Fer12OG_D6",
+                                                    "Fer12OG_D8",
+                                                    "Fer12WT_D6")),
                   checkboxGroupInput(inputId = "tissueSelector",
                                      label = "Select tissues for analysis:",
                                      choiceNames = list("Wing disc",
@@ -37,18 +42,19 @@ ui <- fluidPage(
                                                         "Brain"),
                                      choiceValues = list("Wingdisc",
                                                          "Salivarygland",
-                                                         "Brain")),
+                                                         "Brain"),
+                                     selected = list("Wingdisc",
+                                                     "Salivarygland",
+                                                     "Brain")),
                   textAreaInput(inputId = "geneList", 
                                label = "Enter Gene List:", 
                                placeholder = "Fbgn0000123...",
                                value = NULL,
                                height = 200,
-                               cols = 1),
-                  actionButton(inputId = "Generate",
-                              label = "generate")),
+                               cols = 1)),
     mainPanel(
       h1("RNA-seq Heatmap:"),
-      plotOutput(outputId = "mainHeatmap")),
+      plotOutput(outputId = "mainHeatmap", height = "1000")),
   ))
 
 
@@ -56,9 +62,12 @@ ui <- fluidPage(
 server <- function(input, output) {
   output$mainHeatmap <- renderPlot({
     
-    #Variables to define.
-    geneList <- c("FBgn0015399", "FBgn0033395", "FBgn0026562") #A list of genes to generate a heatmap for.
-    tissuesForHeatmap <- as.list(input$tissueSelector) #The tissues to include in the heatmap.
+    #Search User input for genes using REGEX.
+    regFilter <- regex("FBgn\\d\\d\\d\\d\\d\\d\\d", ignore_case = TRUE, )
+    geneList <- as.list(str_extract_all(input$geneList, regFilter))[[1]]
+    #Select which tissues to use in heatmap based on user input.
+    tissuesForHeatmap <- as.list(input$tissueSelector)
+    #Select which genotypes to use in heatmap based on user input.
     genotypesForAnalysis <- as.list(input$genotypeSelector) #The genotypes to include in the heatmap.
     
     #Read in raw data from external excel file.
