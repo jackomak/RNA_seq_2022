@@ -1,3 +1,8 @@
+#! - Rstudio / Shiny
+
+#app.R - An interactive application to visualize log fold change in gene expression derived from data obtained from the 2022
+#RNA-Seq cachexia project samples.
+
 #Shiny packages ----
 library(shiny)
 library(shinythemes)
@@ -8,6 +13,15 @@ library(tidyverse)
 library(readxl)
 library(circlize)
 
+#Set core variable lists ----
+genotypesForAnalysisNames <- list("RasYki Day 5", "RasYki Day 8", "Feritin (overgrown) Day 6", "Feritin (overgrown) Day 8",
+                                 "Feritin (WT looking) Day 6", "ImpL2 RNAi Day 6", "ImpL2 RNAi Day 8")
+genotypesForAnalysisIDs <- list("RasYki_D5", "RasYki_D8", "Fer12OG_D6", "Fer12OG_D8", "Fer12WT_D6", "ImpL2i_D6", "ImpL2i_D8")
+initallySelectedGenotypes <- list("RasYki_D5", "RasYki_D8", "Fer12OG_D6", "Fer12OG_D8", "Fer12WT_D6")
+tissueNames <- list("Wing disc", "Salivary Gland", "Brain")
+tissueValues <- list("Wingdisc", "Salivarygland", "Brain")
+initallySelectedTissues <- list("Wingdisc", "Salivarygland", "Brain")
+
 #Define UI ----
 ui <- fluidPage(
   theme = shinytheme("united"),
@@ -16,36 +30,15 @@ ui <- fluidPage(
     sidebarPanel(h2("Configuration Tab:"),
                  checkboxGroupInput(inputId = "genotypeSelector",
                                     label = "Select genotypes for analysis:",
-                                    choiceNames = list("RasYki Day 5",
-                                                       "RasYki Day 8",
-                                                       "Feritin (overgrown) Day 6",
-                                                       "Feritin (overgrown) Day 8",
-                                                       "Feritin (WT looking) Day 6",
-                                                       "ImpL2 RNAi Day 6",
-                                                       "ImpL2 RNAi Day 8"),
-                                    choiceValues = list("RasYki_D5",
-                                                        "RasYki_D8",
-                                                        "Fer12OG_D6",
-                                                        "Fer12OG_D8",
-                                                        "Fer12WT_D6",
-                                                        "ImpL2i_D6",
-                                                        "ImpL2i_D8"),
-                                    selected = list("RasYki_D5",
-                                                    "RasYki_D8",
-                                                    "Fer12OG_D6",
-                                                    "Fer12OG_D8",
-                                                    "Fer12WT_D6")),
+                                    choiceNames = genotypesForAnalysisNames,
+                                    choiceValues = genotypesForAnalysisIDs,
+                                    selected = initallySelectedGenotypes),
+                 
                   checkboxGroupInput(inputId = "tissueSelector",
                                      label = "Select tissues for analysis:",
-                                     choiceNames = list("Wing disc",
-                                                        "Salivary Gland",
-                                                        "Brain"),
-                                     choiceValues = list("Wingdisc",
-                                                         "Salivarygland",
-                                                         "Brain"),
-                                     selected = list("Wingdisc",
-                                                     "Salivarygland",
-                                                     "Brain")),
+                                     choiceNames = tissueNames,
+                                     choiceValues = tissueValues,
+                                     selected = initallySelectedTissues),
                   textAreaInput(inputId = "geneList", 
                                label = "Enter Gene List as flybase ID's:", 
                                placeholder = "Fbgn0000123...",
@@ -68,7 +61,7 @@ server <- function(input, output) {
     geneNames <- read_excel(rawData, sheet = 4)
     
     #Search User input for genes using REGEX.
-    regFilter <- regex("FBgn\\d\\d\\d\\d\\d\\d\\d", ignore_case = TRUE, )
+    regFilter <- regex("FBGN\\d\\d\\d\\d\\d\\d\\d", ignore_case = TRUE, )
     geneList <- as.list(str_extract_all(input$geneList, regFilter))[[1]]
     #Select which tissues to use in heatmap based on user input.
     tissuesForHeatmap <- as.list(input$tissueSelector)
