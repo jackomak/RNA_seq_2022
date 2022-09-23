@@ -141,12 +141,8 @@ server <- function(input, output) {
                          column_names_rot = 90,
                          heatmap_legend_param = list(title = "Log-2 Fold Change",
                                                      direction = "vertical",
-                                                     title_position = "lefttop-rot",
-                                                     fontsize = 20,
-                                                     legend_height = unit(10, "cm"))
-                         
-                         )
-      
+                                                     title_position = "leftcenter-rot",
+                                                     legend_height = unit(10, "cm")))
       heatmapList <- append(heatmap, heatmapList)
     }
     
@@ -162,7 +158,6 @@ server <- function(input, output) {
     }
     
   })
-  
 }
 
 #Run app ----
