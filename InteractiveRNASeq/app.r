@@ -48,7 +48,10 @@ ui <- fluidPage(
     mainPanel(
       h1("RNA-seq Heatmap:"),
       checkboxInput("convertGeneIDs", label = "Convert Flybase IDs to gene names.", value = FALSE),
-      plotOutput(outputId = "mainHeatmap", height = "1000")),
+      sliderInput("annotationWidth", label = "Annotation Width (cm):", value = 3, min = 0, max = 5, step = 0.5),
+      sliderInput("scaleMinMax", label = "Select Min/Max values for colour scale:", value = c(-3,3), min = -10, max = 10),
+      plotOutput(outputId = "mainHeatmap", height = "1000")
+      )
   ))
 
 
@@ -100,7 +103,8 @@ server <- function(input, output) {
     Brain <- bLfcTable
     
     #Create Heatmap Color Scale.
-    colorScale <- colorRamp2(c(-3,0,3), c("blue", "white", "red"))
+    colorScale <- colorRamp2(c(input$scaleMinMax[1],0,input$scaleMinMax[2]), c("blue", "white", "red"))
+    lgd <- Legend(col_fun = colorScale, title = "Log 2 Fold-Change")
     
     ##HEATMAP GENERATOR LOOP##
     heatmapList <- list()
@@ -108,7 +112,7 @@ server <- function(input, output) {
       
       #Create normalised count level annotation.
       ncValues <- get(as.name(tissue))[, colnames(get(as.name(tissue))) == "LFC"]
-      rowAnnotation <- rowAnnotation(LFC = anno_barplot(ncValues), border = TRUE)
+      rowAnnotation <- rowAnnotation(LFC = anno_barplot(ncValues, width = unit(input$annotationWidth, "cm")), border = TRUE)
       
       #Create Core Heat map database.
       coreHeatmap <- get(as.name(tissue))[, colnames(get(as.name(tissue))) != "LFC"]
@@ -134,7 +138,14 @@ server <- function(input, output) {
                          row_gap = unit(1, "mm"),
                          border = TRUE,
                          right_annotation = rowAnnotation,
-                         column_names_rot = 90)
+                         column_names_rot = 90,
+                         heatmap_legend_param = list(title = "Log-2 Fold Change",
+                                                     direction = "vertical",
+                                                     title_position = "lefttop-rot",
+                                                     fontsize = 20,
+                                                     legend_height = unit(10, "cm"))
+                         
+                         )
       
       heatmapList <- append(heatmap, heatmapList)
     }
@@ -143,11 +154,11 @@ server <- function(input, output) {
     HeatmapListLength <- length(heatmapList)
     
     if(HeatmapListLength == 1) {
-      plot(heatmapList[[1]])
+      draw(heatmapList[[1]], heatmap_legend_side = "topleft")
     } else if (HeatmapListLength == 2) {
-      plot(heatmapList[[2]] + heatmapList[[1]])
+      draw(heatmapList[[2]] + heatmapList[[1]], heatmap_legend_side = "topleft")
     } else {
-      plot(heatmapList[[3]] + heatmapList[[2]] + heatmapList[[1]])
+      draw(heatmapList[[3]] + heatmapList[[2]] + heatmapList[[1]])
     }
     
   })
