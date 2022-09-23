@@ -110,7 +110,7 @@ server <- function(input, output) {
       ncValues <- get(as.name(tissue))[, colnames(get(as.name(tissue))) == "LFC"]
       rowAnnotation <- rowAnnotation(LFC = anno_barplot(ncValues), border = TRUE)
       
-      #Create Core Heatmap database.
+      #Create Core Heat map database.
       coreHeatmap <- get(as.name(tissue))[, colnames(get(as.name(tissue))) != "LFC"]
       
       if (convertGeneIds == TRUE){
