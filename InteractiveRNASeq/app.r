@@ -16,11 +16,19 @@ library(circlize)
 #Set core variable lists ----
 rawData <- "ALL_Tissues_LFC_Database.xlsx"
 rawDataColnames <- read_excel(rawData, sheet = 1, )
-genotypesForAnalysisNames <- list()
-genotypesForAnalysisIDs <- list("RasYki_D5", "RasYki_D8", "Fer12OG_D6", "Fer12OG_D8", "Fer12WT_D6", "ImpL2i_D6", "ImpL2i_D8")
-initallySelectedGenotypes <- list("RasYki_D5", "RasYki_D8", "Fer12OG_D6", "Fer12OG_D8", "Fer12WT_D6")
-tissueNames <- list("Wing disc", "Salivary Gland", "Brain")
-tissueValues <- list("Wingdisc", "Salivarygland", "Brain")
+genotypesForAnalysisNames <- list("RasYki (D5)","RasYki (D8)","Feritin (D6)",
+                                  "Feritin (D8)", "Feritin WT looking (D6)",
+                                  "ImpL2 RNAi (D6)", "ImpL2 RNAi (D8)", "Wts (D6)",
+                                  "Wts (D8)", "Cic Wts (D6)", "Cic Wts (D8)")
+
+genotypesForAnalysisIDs <- list("RasYki_D5","RasYki_D8","Fer12OG_D6",
+                                "Fer12OG_D8","Fer12WT_D6","ImpL2i_D6",
+                                "ImpL2i_D8", "WtsD6","WtsD9","CicWtsD6","CicWtsD9") 
+
+initallySelectedGenotypes <- list("RasYki_D5", "RasYki_D8", "Fer12OG_D6", "Fer12OG_D8")
+
+tissueNames <- list("FH 2022 Wing disc", "FH 2022 Salivary Gland", "FH 2022 Brain", "MA 2016 Wing Disc")
+tissueValues <- list("Wingdisc", "Salivarygland", "Brain", "Mardelle_CicWts_WD")
 initallySelectedTissues <- list("Wingdisc", "Salivarygland", "Brain")
 
 #Define UI ----
@@ -40,12 +48,16 @@ ui <- fluidPage(
                                      choiceNames = tissueNames,
                                      choiceValues = tissueValues,
                                      selected = initallySelectedTissues),
+                 
+                 p("Please note - All LFC annotation data and information on some gene ID's is unavailible for the MA 2016 dataset."),
+                 
                   textAreaInput(inputId = "geneList", 
                                label = "Enter Gene List as flybase ID's:", 
                                placeholder = "Fbgn0000123...",
                                value = NULL,
                                height = 200,
                                cols = 1)),
+                  
     mainPanel(
       h1("RNA-seq Heatmap:"),
       checkboxInput("convertGeneIDs", label = "Convert Flybase IDs to gene names.", value = FALSE),
@@ -61,7 +73,7 @@ server <- function(input, output) {
   output$mainHeatmap <- renderPlot({
     
     #Set path to raw data folder and load in geneNames conversion sheet.
-    geneNames <- read_excel(rawData, sheet = 4)
+    geneNames <- read_excel(rawData, sheet = 5)
     
     #Search User input for genes using REGEX.
     regFilter <- regex("FBGN\\d\\d\\d\\d\\d\\d\\d", ignore_case = TRUE, )
@@ -86,21 +98,28 @@ server <- function(input, output) {
     bLfcTable <- left_join(bLfcTable, geneNames, by = "GeneID")
     bLfcTable <- column_to_rownames(bLfcTable, var = "GeneID")
     
+    MaWdLfcTable <- read_excel(rawData, sheet = 4)
+    MaWdLfcTable <- left_join(MaWdLfcTable, geneNames, by = "GeneID")
+    MaWdLfcTable <- column_to_rownames(MaWdLfcTable, var = "GeneID")
+    
     #Filter datasets to only include rows that user has specified in "genelist" variable.
     wdLfcTable <- wdLfcTable[rownames(wdLfcTable) %in% geneList, ]
     sgLfcTable <- sgLfcTable[rownames(sgLfcTable) %in% geneList, ]
     bLfcTable <- bLfcTable[rownames(bLfcTable) %in% geneList, ]
+    MaWdLfcTable <- MaWdLfcTable[rownames(MaWdLfcTable) %in% geneList, ]
     
     #Remove unwanted tissue datasets#
     genotypesForAnalysis <- append(genotypesForAnalysis, c("LFC", "GeneName"))
     wdLfcTable <- wdLfcTable[, colnames(wdLfcTable) %in% genotypesForAnalysis]
     sgLfcTable <- sgLfcTable[, colnames(sgLfcTable) %in% genotypesForAnalysis]
     bLfcTable <- bLfcTable[, colnames(bLfcTable) %in% genotypesForAnalysis]
+    MaWdLfcTable <- MaWdLfcTable[, colnames(MaWdLfcTable) %in% genotypesForAnalysis]
     
     #Select Which tissues to add to heatmap#
     Wingdisc <- wdLfcTable
     Salivarygland <- sgLfcTable
     Brain <- bLfcTable
+    Mardelle_CicWts_WD <- MaWdLfcTable
     
     #Create Heatmap Color Scale.
     colorScale <- colorRamp2(c(input$scaleMinMax[1],0,input$scaleMinMax[2]), c("blue", "white", "red"))
@@ -150,11 +169,13 @@ server <- function(input, output) {
     HeatmapListLength <- length(heatmapList)
     
     if(HeatmapListLength == 1) {
-      draw(heatmapList[[1]], heatmap_legend_side = "topleft")
+      draw(heatmapList[[1]], heatmap_legend_side = "right")
     } else if (HeatmapListLength == 2) {
-      draw(heatmapList[[2]] + heatmapList[[1]], heatmap_legend_side = "topleft")
-    } else {
-      draw(heatmapList[[3]] + heatmapList[[2]] + heatmapList[[1]])
+      draw(heatmapList[[2]] + heatmapList[[1]], heatmap_legend_side = "right")
+    } else if (HeatmapListLength == 3) {
+      draw(heatmapList[[3]] + heatmapList[[2]] + heatmapList[[1]], heatmap_legend_side = "right")
+    }  else {
+      draw(heatmapList[[4]] + heatmapList[[3]] + heatmapList[[2]] + heatmapList[[1]], heatmap_legend_side = "right")
     }
     
   })
