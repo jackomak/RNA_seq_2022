@@ -14,8 +14,9 @@ library(readxl)
 library(circlize)
 
 #Set core variable lists ----
-genotypesForAnalysisNames <- list("RasYki Day 5", "RasYki Day 8", "Feritin (overgrown) Day 6", "Feritin (overgrown) Day 8",
-                                 "Feritin (WT looking) Day 6", "ImpL2 RNAi Day 6", "ImpL2 RNAi Day 8")
+rawData <- "ALL_Tissues_LFC_Database.xlsx"
+rawDataColnames <- read_excel(rawData, sheet = 1, )
+genotypesForAnalysisNames <- list()
 genotypesForAnalysisIDs <- list("RasYki_D5", "RasYki_D8", "Fer12OG_D6", "Fer12OG_D8", "Fer12WT_D6", "ImpL2i_D6", "ImpL2i_D8")
 initallySelectedGenotypes <- list("RasYki_D5", "RasYki_D8", "Fer12OG_D6", "Fer12OG_D8", "Fer12WT_D6")
 tissueNames <- list("Wing disc", "Salivary Gland", "Brain")
@@ -60,7 +61,6 @@ server <- function(input, output) {
   output$mainHeatmap <- renderPlot({
     
     #Set path to raw data folder and load in geneNames conversion sheet.
-    rawData <- "ALL_Tissues_LFC_Database.xlsx"
     geneNames <- read_excel(rawData, sheet = 4)
     
     #Search User input for genes using REGEX.
