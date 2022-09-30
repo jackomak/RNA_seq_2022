@@ -73,7 +73,7 @@ server <- function(input, output) {
   output$mainHeatmap <- renderPlot({
     
     #Set path to raw data folder and load in geneNames conversion sheet.
-    geneNames <- read_excel(rawData, sheet = 5)
+    geneNames <- read_excel(rawData, sheet = 7)
     
     #Search User input for genes using REGEX.
     regFilter <- regex("FBGN\\d\\d\\d\\d\\d\\d\\d", ignore_case = TRUE, )
@@ -85,35 +85,32 @@ server <- function(input, output) {
     #Select whether heatmap should be built with gene names or gene symbols.
     convertGeneIds <- input$convertGeneIDs[1]
     
-    #Read in raw log fold change databases for each tissue.
-    wdLfcTable <- read_excel(rawData, sheet = 1)
-    wdLfcTable <- left_join(wdLfcTable, geneNames, by = "GeneID")
-    wdLfcTable <- column_to_rownames(wdLfcTable, var = "GeneID")
+    #Read in raw log fold change databases for each tissue. # Create function to do this.
+    formatLFCTable <- function(sheetnumber, inputVar) {
+      inputVar <- read_excel(rawData, sheet = sheetnumber)
+      inputVar <- left_join(inputVar, geneNames, by = "GeneID")
+      inputVar <- column_to_rownames(inputVar, var = "GeneID")
+      inputVar <- inputVar[rownames(inputVar) %in% geneList, ]
+    }
     
-    sgLfcTable <- read_excel(rawData, sheet = 2)
-    sgLfcTable <- left_join(sgLfcTable, geneNames, by = "GeneID")
-    sgLfcTable <- column_to_rownames(sgLfcTable, var = "GeneID")
-    
-    bLfcTable <- read_excel(rawData, sheet = 3)
-    bLfcTable <- left_join(bLfcTable, geneNames, by = "GeneID")
-    bLfcTable <- column_to_rownames(bLfcTable, var = "GeneID")
-    
-    MaWdLfcTable <- read_excel(rawData, sheet = 4)
-    MaWdLfcTable <- left_join(MaWdLfcTable, geneNames, by = "GeneID")
-    MaWdLfcTable <- column_to_rownames(MaWdLfcTable, var = "GeneID")
-    
-    #Filter datasets to only include rows that user has specified in "genelist" variable.
-    wdLfcTable <- wdLfcTable[rownames(wdLfcTable) %in% geneList, ]
-    sgLfcTable <- sgLfcTable[rownames(sgLfcTable) %in% geneList, ]
-    bLfcTable <- bLfcTable[rownames(bLfcTable) %in% geneList, ]
-    MaWdLfcTable <- MaWdLfcTable[rownames(MaWdLfcTable) %in% geneList, ]
+    wdLfcTable <- formatLFCTable(sheetnumber = 1, inputVar =  wdLfcTable)
+    sgLfcTable <- formatLFCTable(sheetnumber = 2, inputVar = sgLfcTable)
+    bLfcTable <- formatLFCTable(sheetnumber =  3, inputVar =  bLfcTable)
+    MaWdLfcTable <- formatLFCTable(sheetnumber =  4, inputVar = MaWdLfcTable)
     
     #Remove unwanted tissue datasets#
     genotypesForAnalysis <- append(genotypesForAnalysis, c("LFC", "GeneName"))
-    wdLfcTable <- wdLfcTable[, colnames(wdLfcTable) %in% genotypesForAnalysis]
-    sgLfcTable <- sgLfcTable[, colnames(sgLfcTable) %in% genotypesForAnalysis]
-    bLfcTable <- bLfcTable[, colnames(bLfcTable) %in% genotypesForAnalysis]
-    MaWdLfcTable <- MaWdLfcTable[, colnames(MaWdLfcTable) %in% genotypesForAnalysis]
+    listOfGeneotypesToFilter <- c(wdLfcTable, sgLfcTable, bLfcTable, MaWdLfcTable)
+    
+    #Function to remove unwanted tissue/genotypes from the dataset.
+    genotypeFilter <- function(inputVar) {
+      inputVar <<- inputVar[, colnames(inputVar) %in% genotypesForAnalysis]
+    }
+    
+    wdLfcTable <- genotypeFilter(wdLfcTable)
+    sgLfcTable <- genotypeFilter(sgLfcTable)
+    bLfcTable <- genotypeFilter(bLfcTable)
+    MaWdLfcTable <- genotypeFilter(MaWdLfcTable)
     
     #Select Which tissues to add to heatmap#
     Wingdisc <- wdLfcTable
@@ -174,7 +171,7 @@ server <- function(input, output) {
       draw(heatmapList[[2]] + heatmapList[[1]], heatmap_legend_side = "right")
     } else if (HeatmapListLength == 3) {
       draw(heatmapList[[3]] + heatmapList[[2]] + heatmapList[[1]], heatmap_legend_side = "right")
-    }  else {
+    } else {
       draw(heatmapList[[4]] + heatmapList[[3]] + heatmapList[[2]] + heatmapList[[1]], heatmap_legend_side = "right")
     }
     
