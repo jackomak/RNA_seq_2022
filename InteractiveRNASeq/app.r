@@ -107,6 +107,7 @@ server <- function(input, output) {
       inputVar <<- inputVar[, colnames(inputVar) %in% genotypesForAnalysis]
     }
     
+    #Run Function through each genotype - is there a way to de recurse this? loop through list an output to global env?
     wdLfcTable <- genotypeFilter(wdLfcTable)
     sgLfcTable <- genotypeFilter(sgLfcTable)
     bLfcTable <- genotypeFilter(bLfcTable)
@@ -161,7 +162,7 @@ server <- function(input, output) {
                                                      legend_height = unit(10, "cm")))
       heatmapList <- append(heatmap, heatmapList)
     }
-    
+    list2
     #Plot Heat map Based on Tissues Provided.
     HeatmapListLength <- length(heatmapList)
     
