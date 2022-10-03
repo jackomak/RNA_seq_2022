@@ -15,20 +15,27 @@ library(circlize)
 
 #Set core variable lists ----
 rawData <- "ALL_Tissues_LFC_Database.xlsx"
-rawDataColnames <- read_excel(rawData, sheet = 1, )
+
 genotypesForAnalysisNames <- list("RasYki (D5)","RasYki (D8)","Feritin (D6)",
                                   "Feritin (D8)", "Feritin WT looking (D6)",
                                   "ImpL2 RNAi (D6)", "ImpL2 RNAi (D8)", "Wts (D6)",
-                                  "Wts (D8)", "Cic Wts (D6)", "Cic Wts (D8)")
+                                  "Wts (D8)", "Cic Wts (D6)", "Cic Wts (D8)",
+                                  "hh> RasScrib (D5-9)", "eyFLP > RasScrib (D5-9)")
 
 genotypesForAnalysisIDs <- list("RasYki_D5","RasYki_D8","Fer12OG_D6",
                                 "Fer12OG_D8","Fer12WT_D6","ImpL2i_D6",
-                                "ImpL2i_D8", "WtsD6","WtsD9","CicWtsD6","CicWtsD9") 
+                                "ImpL2i_D8", "WtsD6","WtsD9","CicWtsD6",
+                                "CicWtsD9", "hh_RasScribD5_9", "_eyFLP_RasScrib_D5_9") 
 
 initallySelectedGenotypes <- list("RasYki_D5", "RasYki_D8", "Fer12OG_D6", "Fer12OG_D8")
 
-tissueNames <- list("FH 2022 Wing disc", "FH 2022 Salivary Gland", "FH 2022 Brain", "MA 2016 Wing Disc")
-tissueValues <- list("Wingdisc", "Salivarygland", "Brain", "Mardelle_CicWts_WD")
+tissueNames <- list("FH 2022 Wing disc", "FH 2022 Salivary Gland", 
+                    "FH 2022 Brain", "MA CicWts Wing Disc",
+                    "MA RasScrib Wing Disc", "MA RasScrib Eye Disc")
+
+tissueValues <- list("Wingdisc", "Salivarygland", "Brain", "Mardelle_CicWts_WD",
+                     "Mardelle_hhRasScrib_WD", "Mardelle_EyFLPRasScrib_ED")
+
 initallySelectedTissues <- list("Wingdisc", "Salivarygland", "Brain")
 
 #Define UI ----
@@ -92,15 +99,17 @@ server <- function(input, output) {
       inputVar <- column_to_rownames(inputVar, var = "GeneID")
       inputVar <- inputVar[rownames(inputVar) %in% geneList, ]
     }
-    
+    ####Could reduce redundancy by using sheet name instead of sheet number.
     wdLfcTable <- formatLFCTable(sheetnumber = 1, inputVar =  wdLfcTable)
     sgLfcTable <- formatLFCTable(sheetnumber = 2, inputVar = sgLfcTable)
     bLfcTable <- formatLFCTable(sheetnumber =  3, inputVar =  bLfcTable)
     MaWdLfcTable <- formatLFCTable(sheetnumber =  4, inputVar = MaWdLfcTable)
+    MaHhWdLfcTable <- formatLFCTable(sheetnumber = 5, inputVar = MaHhWdLfcTable)
+    MaEyFLPLfcTable <- formatLFCTable(sheetnumber = 6, inputVar = MaEyFLPLfcTable)
     
     #Remove unwanted tissue datasets#
     genotypesForAnalysis <- append(genotypesForAnalysis, c("LFC", "GeneName"))
-    listOfGeneotypesToFilter <- c(wdLfcTable, sgLfcTable, bLfcTable, MaWdLfcTable)
+    listOfGeneotypesToFilter <- c(wdLfcTable, sgLfcTable, bLfcTable, MaWdLfcTable, MaHhWdLfcTable, MaEyFLPLfcTable)
     
     #Function to remove unwanted tissue/genotypes from the dataset.
     genotypeFilter <- function(inputVar) {
@@ -112,12 +121,16 @@ server <- function(input, output) {
     sgLfcTable <- genotypeFilter(sgLfcTable)
     bLfcTable <- genotypeFilter(bLfcTable)
     MaWdLfcTable <- genotypeFilter(MaWdLfcTable)
+    MaHhWdLfcTable <- genotypeFilter(MaHhWdLfcTable)
+    MaEyFLPLfcTable <- genotypeFilter(MaEyFLPLfcTable)
     
     #Select Which tissues to add to heatmap#
     Wingdisc <- wdLfcTable
     Salivarygland <- sgLfcTable
     Brain <- bLfcTable
     Mardelle_CicWts_WD <- MaWdLfcTable
+    Mardelle_hhRasScrib_WD <- MaHhWdLfcTable
+    Mardelle_EyFLPRasScrib_ED <- MaEyFLPLfcTable
     
     #Create Heatmap Color Scale.
     colorScale <- colorRamp2(c(input$scaleMinMax[1],0,input$scaleMinMax[2]), c("blue", "white", "red"))
@@ -162,9 +175,10 @@ server <- function(input, output) {
                                                      legend_height = unit(10, "cm")))
       heatmapList <- append(heatmap, heatmapList)
     }
-    list2
+  
     #Plot Heat map Based on Tissues Provided.
     HeatmapListLength <- length(heatmapList)
+    heatmapBuilder <- function(HeatmapListLength, heatmapList) {
     
     if(HeatmapListLength == 1) {
       draw(heatmapList[[1]], heatmap_legend_side = "right")
@@ -174,7 +188,8 @@ server <- function(input, output) {
       draw(heatmapList[[3]] + heatmapList[[2]] + heatmapList[[1]], heatmap_legend_side = "right")
     } else {
       draw(heatmapList[[4]] + heatmapList[[3]] + heatmapList[[2]] + heatmapList[[1]], heatmap_legend_side = "right")
-    }
+    }}
+    heatmapBuilder(HeatmapListLength, heatmapList)
     
   })
 }
