@@ -99,6 +99,7 @@ server <- function(input, output) {
       inputVar <- column_to_rownames(inputVar, var = "GeneID")
       inputVar <- inputVar[rownames(inputVar) %in% geneList, ]
     }
+    
     ####Could reduce redundancy by using sheet name instead of sheet number.
     wdLfcTable <- formatLFCTable(sheetnumber = 1, inputVar =  wdLfcTable)
     sgLfcTable <- formatLFCTable(sheetnumber = 2, inputVar = sgLfcTable)
