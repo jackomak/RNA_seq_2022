@@ -6,15 +6,18 @@
 #Shiny packages ----
 library(shiny)
 library(shinythemes)
+library(ggplot2)
 
 #core packages for data visualization ----
 library(ComplexHeatmap)
 library(tidyverse)
 library(readxl)
 library(circlize)
+cat("Loaded libraries.")
 
 #Set core variable lists ----
 rawData <- "ALL_Tissues_LFC_Database.xlsx"
+cat("Set raw database as variable: rawData")
 
 #List of names to describe the availible genotypes for the heatmap in the GUI.
 genotypesForAnalysisNames <- list("RasYki (D5)","RasYki (D8)","Feritin (D6)",
@@ -43,6 +46,7 @@ tissueValues <- list("Wingdisc", "Salivarygland", "Brain", "Mardelle_CicWts_WD",
 
 #Select which datasets to intially mark as checked by the GUI.
 initallySelectedTissues <- list("Wingdisc", "Salivarygland", "Brain")
+cat("Created UI Variables successfully.")
 
 #Define UI ----
 ui <- fluidPage(
@@ -109,6 +113,7 @@ server <- function(input, output) {
     #Select whether heatmap should be built with gene names or gene symbols.
     convertGeneIds <- input$convertGeneIDs[1]
     
+  
     #Read in raw log fold change databases for each tissue. # Create function to do this.
     formatLFCTable <- function(sheetnumber, inputVar) {
       inputVar <- read_excel(rawData, sheet = sheetnumber)
@@ -126,7 +131,7 @@ server <- function(input, output) {
     MaEyFLPLfcTable <- formatLFCTable(sheetnumber = 6, inputVar = MaEyFLPLfcTable)
     
     #Remove unwanted tissue datasets#
-    genotypesForAnalysis <- append(genotypesForAnalysis, c("LFC", "GeneName"))
+    genotypesForAnalysis <- append(genotypesForAnalysis, c("wt_NCL", "GeneName"))
     listOfGeneotypesToFilter <- c(wdLfcTable, sgLfcTable, bLfcTable, MaWdLfcTable, MaHhWdLfcTable, MaEyFLPLfcTable)
     
     #Function to remove unwanted tissue/genotypes from the dataset.
@@ -159,11 +164,11 @@ server <- function(input, output) {
     for (tissue in tissuesForHeatmap) {
       
       #Create normalised count level annotation (LNC).
-      ncValues <- get(as.name(tissue))[, colnames(get(as.name(tissue))) == "LFC"]
-      rowAnnotation <- rowAnnotation(LFC = anno_barplot(ncValues, width = unit(input$annotationWidth, "cm")), border = TRUE)
+      ncValues <- get(as.name(tissue))[, colnames(get(as.name(tissue))) == "wt_NCL"]
+      rowAnnotation <- rowAnnotation(wt_NCL = anno_barplot(ncValues, width = unit(input$annotationWidth, "cm")), border = FALSE)
       
       #Create Core Heat map database.
-      coreHeatmap <- get(as.name(tissue))[, colnames(get(as.name(tissue))) != "LFC"]
+      coreHeatmap <- get(as.name(tissue))[, colnames(get(as.name(tissue))) != "wt_NCL"]
       
       #If user selects gene names, replace rownames with gene names.
       if (convertGeneIds == TRUE){
