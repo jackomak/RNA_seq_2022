@@ -8,16 +8,18 @@ library(shiny)
 library(shinythemes)
 library(ggplot2)
 
+
 #core packages for data visualization ----
 library(ComplexHeatmap)
 library(tidyverse)
 library(readxl)
 library(circlize)
-cat("Loaded libraries.")
+library(gridExtra)
+library(reshape2)
+
 
 #Set core variable lists ----
 rawData <- "ALL_Tissues_LFC_Database.xlsx"
-cat("Set raw database as variable: rawData")
 
 #List of names to describe the availible genotypes for the heatmap in the GUI.
 genotypesForAnalysisNames <- list("RasYki (D5)","RasYki (D8)","Feritin (D6)",
@@ -48,28 +50,34 @@ tissueValues <- list("Wingdisc", "Salivarygland", "Brain", "Mardelle_CicWts_WD",
 initallySelectedTissues <- list("Wingdisc", "Salivarygland", "Brain")
 cat("Created UI Variables successfully.")
 
+
 #Define UI ----
 ui <- fluidPage(
-  #Pick pre-existing theme used to build the application GUI
-  theme = shinytheme("united"),
+  navbarPage("FH Lab RNA-seq Visualiser:", tabPanel("Heatmap Generator",
+  
+
+  #GUI for heatmap generator ----                                                 
+  
   #Add Title to the GUI.
   titlePanel("RNA-Seq Heatmap Generator"),
+  
   #Create Sidebar containing all of the following reactive elements:
   sidebarLayout(
     sidebarPanel(h2("Configuration Tab:"),
+                 
                  #Checkbox to select which genotypes to add to the heatmap.
                  checkboxGroupInput(inputId = "genotypeSelector",
                                     label = "Select genotypes for analysis:",
                                     choiceNames = genotypesForAnalysisNames,
                                     choiceValues = genotypesForAnalysisIDs,
                                     selected = initallySelectedGenotypes),
+                 
                  #Checkbox to select which datasets to include in the heatmap.
                   checkboxGroupInput(inputId = "tissueSelector",
                                      label = "Select tissues for analysis:",
                                      choiceNames = tissueNames,
                                      choiceValues = tissueValues,
                                      selected = initallySelectedTissues),
-                 
                  #Descriptor.
                  p("Please note - All LFC annotation data and information on some gene ID's is unavailible for the MA 2016 dataset."),
                  
@@ -88,16 +96,53 @@ ui <- fluidPage(
       checkboxInput("convertGeneIDs", label = "Convert Flybase IDs to gene names.", value = FALSE),
       #Slider to add parameters to edit the width of the LFC annotation columns on the heatmap.
       sliderInput("annotationWidth", label = "Annotation Width (cm):", value = 3, min = 0, max = 5, step = 0.5),
-      #Slider to add parameters to edit the boundries of the color scale bar on the heatmap.
+      #Slider to add parameters to edit the boundaries of the color scale bar on the heatmap.
       sliderInput("scaleMinMax", label = "Select Min/Max values for colour scale:", value = c(-3,3), min = -10, max = 10),
       #Add the final heatmap image to the main panel. 
       plotOutput(outputId = "mainHeatmap", height = "1000")
-      )
-  ))
+      ))),
+  
+  
+  #GUI For Gene Count Visualizer ----
+  tabPanel("Gene Count Visualiser", 
+           
+           #Add title.
+           titlePanel("Individual Gene Count Viewer"),
+           
+           #Create sidebar containing all of the following reactive elements.
+           sidebarLayout(sidebarPanel(
+             h2("Configuration Tab:"),
+             
+             #Checkbox to select for which Tissues to include.
+             
+             #Checkbox to select which gene to visualize.
+             textAreaInput(inputId = "GeneVis_GeneName", 
+                           label = "Enter a FLybase ID to visualise - 1 gene only.", 
+                           placeholder = "Fbgn0000123",
+                           value = NULL,
+                           height = 40,
+                           cols = 1),
+             #Checkbox to convert gene Id's to gene names.
+             
+             #Checkbox to convert to a log scale.
+             
+             #Search By gene Name rather than symbol.
+           ),
+           
+          #Design Main panel - Graph.
+          mainPanel(h1("Gene Count Visualiser."), 
+                    plotOutput(outputId = "GC_visualiser", height = "750"))),
+      )),
+  
+  theme = shinytheme("united"))
+  
 
 
 #Define server logic ----
+
 server <- function(input, output) {
+  
+  #Heatmap Generator logic ----
   output$mainHeatmap <- renderPlot({
     
     #Set path to raw data folder and load in geneNames conversion sheet.
@@ -219,7 +264,92 @@ server <- function(input, output) {
     heatmapBuilder(HeatmapListLength, heatmapList)
     
   })
-}
+  
+  # GC Visualizer logic ----
+  output$GC_visualiser <- renderPlot({
+   
+  #Set empty variables.
+  normalisedCountsList<- list()
+  geneCountVisualsList <- list()
+  valuesForScale <- c()
+ 
+  #Set color scale for each genotype.
+  geneotypeColors <- c("PtcG4_D6" = "#00BA38", "Yw_D5" = "#00BA38",
+                      "RasYki_D5    " = "#F8766D", "RasYki_D8" = "#E68613",
+                      "Fer12OG_D6" = "#00B8E7", "Fer12OG_D8" = "#00A9FF", "Fer12WT_D6" = "#8494FF",
+                      "ImpL2i_D6" = "#ED68ED", "ImpL2i_D8" = "#FF61CC")
+ 
+  #Select gene to analyse using flybase ID. Can add functionality later to convert this to gene Name.
+  GeneID <- input$GeneVis_GeneName
+ 
+  #Logic to assign the max normcount value from each of the three datasets for the gene of interest for y scale of graphs.
+  for (i in c("Wing Disc", "Salivary Gland", "Brain")){
+   
+    #Read in databases from normalised count excel file. Each tissue dataset is stored on a seperate sheet.
+    normalisedCountsDatabase <- read_excel("All_Tissue_Normcounts.xlsx", sheet = i) %>% column_to_rownames("...1")
+   
+    #Append the database to a list.
+    normalisedCountsList[[i]] <- normalisedCountsDatabase
+   
+    #Grab Info for the gene of interest.
+    geneInfo <- melt(as.matrix(normalisedCountsDatabase[GeneID,]))
+    valuesForScale <- append(valuesForScale, geneInfo$value)
+  }
+ 
+  #Logic to generate matrix tables for each of the three tissue types and generate graphs for each. Outputs a list contianing all of the figures.
+  for (i in c("Wing Disc", "Salivary Gland", "Brain")){
+   
+    #Grab the relevent database generated by the previous for loop.
+    normalisedCountsDatabase <- normalisedCountsList[[i]]
+   
+    #Transform the matrix so graph can be generated using different genotypes.
+    geneInfo <- melt(as.matrix(normalisedCountsDatabase[GeneID,]))
+   
+    #Rename genotypes.
+    geneInfo$Genotype <- ifelse(grepl("PtcG4_D6", geneInfo$Var2), "PtcG4_D6",
+                          ifelse(grepl("Yw_D5", geneInfo$Var2), "Yw_D5",
+                          ifelse(grepl("RasYki_D5", geneInfo$Var2), "RasYki_D5    ", 
+                          ifelse(grepl("RasYki_D8", geneInfo$Var2), "RasYki_D8",
+                          ifelse(grepl("Fer12OG_D6", geneInfo$Var2), "Fer12OG_D6",
+                          ifelse(grepl("Fer12OG_D8", geneInfo$Var2), "Fer12OG_D8",
+                          ifelse(grepl("Fer12WT_D6", geneInfo$Var2), "Fer12WT_D6",
+                          ifelse(grepl("ImpL2i_D6", geneInfo$Var2), "ImpL2i_D6", "ImpL2i_D8"))))))))
+   
+    #Reorder Levels of genotype factor.
+    if (i == "Brain"){
+      geneInfo$Genotype <- factor(geneInfo$Genotype, levels = c("Yw_D5", "RasYki_D5    ", "RasYki_D8", "ImpL2i_D6", "ImpL2i_D8"))
+    }   
+    else {
+      geneInfo$Genotype <- factor(geneInfo$Genotype, levels = c("PtcG4_D6", "RasYki_D5    ", "RasYki_D8", "Fer12OG_D6", "Fer12OG_D8", "Fer12WT_D6", "ImpL2i_D6", "ImpL2i_D8"))
+    }
+   
+    #Generate Graph for each tissue type and append to geneCountVisualsList.
+    geneCountsVisual <- ggplot(geneInfo, aes(x = Genotype, y = value, color = Genotype)) +
+      geom_point(size = 4) +
+      facet_grid(~Var1) +
+      theme(axis.text.x = element_text(angle = 90, size = 15, hjust = 0), 
+            axis.text.y = element_text(angle = 0, size = 15),
+            plot.title = element_text(hjust = 0.5, size = 20),
+            axis.title = element_text(size = 15),
+            legend.position = "none",
+            ) +
+      ggtitle(paste0(i)) +
+      ylim(0, max(valuesForScale)) +
+      ylab("Normalised Count") +
+      scale_color_manual(values = geneotypeColors)
+   
+    geneCountVisualsList[[i]] <- geneCountsVisual
+    
+  }
+    
+    #Combine graphs generated from each tissue dataset to generate final figure.
+    final_figure <- grid.arrange(geneCountVisualsList[[1]], geneCountVisualsList[[2]], geneCountVisualsList[[3]], nrow = 1)
+    grid.draw(final_figure)
+
+    })
+
+  }
+
 
 #Run app ----
 shinyApp(ui = ui, server = server)
