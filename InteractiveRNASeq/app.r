@@ -1,7 +1,11 @@
 #! - Rstudio / Shiny
 
+
 #app.R - An interactive application to visualize log fold change in gene expression derived from data obtained from the 2022
 #RNA-Seq cachexia project samples.
+
+#Add deployment feature package.
+library(rsconnect)
 
 #Shiny packages ----
 library(shiny)
