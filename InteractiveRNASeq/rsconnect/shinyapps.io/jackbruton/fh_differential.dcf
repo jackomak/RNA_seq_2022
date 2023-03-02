@@ -1,0 +1,11 @@
+name: fh_differential
+title:
+username:
+account: jackbruton
+server: shinyapps.io
+hostUrl: https://api.shinyapps.io/v1
+appId: 8455492
+bundleId: 6906451
+url: https://jackbruton.shinyapps.io/fh_differential/
+when: 1677754887.16026
+lastSyncTime: 1677754887.16026

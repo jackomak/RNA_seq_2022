@@ -7,11 +7,8 @@ library(circlize)
 library(gridExtra)
 library(reshape2)
 
-#Source String files:
+#Source String objects for UI:
 source("./R/HeatmapStrings.R", local = TRUE)
-
-
-
 
 # Design page UI ----
 
@@ -48,7 +45,7 @@ HeatmapUI <- function(id){
                                #Checkbox to convert gene symbols to gene names on heatmap.
                                checkboxInput(inputId = ns("convertGeneIDs"), 
                                              label = "Convert Flybase IDs to gene names.",
-                                             value = FALSE),
+                                             value = TRUE),
                                sliderInput(inputId = ns("annotationWidth"),
                                            label = "Annotation Width (cm):", 
                                            value = 1.5, min = 0, max = 5, step = 0.5),
@@ -59,6 +56,7 @@ HeatmapUI <- function(id){
                   
                   #Main Panel display for core heatmap.
                   mainPanel(h2("Heatmap for selected genes:"),
+                            downloadButton(outputId = ns("downloadHeatmap"), label = "Download Heatmap as png"),
                             plotOutput(outputId = ns("mainHeatmap"), height = 1000))
                             ))
   
@@ -119,7 +117,7 @@ HeatmapServer <- function(id) {
       sgLfcTable <- genotypeFilter(sgLfcTable)
       bLfcTable <- genotypeFilter(bLfcTable)
       
-      #Select Which tissues to add to heatmap#
+      #Select Which tissues to add to heatmap.
       Wingdisc <- wdLfcTable
       Salivarygland <- sgLfcTable
       Brain <- bLfcTable
@@ -185,13 +183,23 @@ HeatmapServer <- function(id) {
         }}
       
       #Plot Final Heatmap
-      heatmapBuilder(HeatmapListLength, heatmapList)
+      finalHeatmap <<- heatmapBuilder(HeatmapListLength, heatmapList)
       
       })
     
-  })
+    output$downloadHeatmap <- downloadHandler(
+      
+      filename = function() {paste("Heatmap_Plot_",Sys.Date(),".png", sep = "")},
+      content = function(file) {
+        png(file)
+        print(finalHeatmap)
+        dev.off()
+      })
+  
+    })
   
 }
+
     
     
   

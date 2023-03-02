@@ -73,7 +73,7 @@ NormalisationUI <- function(id){
                                                              label = "Please select your experimental condtion:", choices = c(""), selected = ""),
                                                  actionButton(ns("generate_Normalised_Counts"), "Generate Normalised Count Table"),
                                                  tableOutput(outputId = ns("normalisedCountTable")),
-                                                 add_busy_bar(color = "#FF0000"),
+                                                 #add_busy_bar(color = "#FF0000"),
                                                  downloadButton(outputId = ns("downloadNormcounts"), label = "Download Normalised Count Matrix")),
                                         
                                         
@@ -101,7 +101,7 @@ NormalisationUI <- function(id){
                                                  selectInput(inputId = ns("DEGGeneSet"),
                                                              label = "Choose gene set to identify:",
                                                              choices = c("Upregulated Genes", "Downregulated Genes", "All DEG's"),
-                                                             selected = ("All DEG's")),
+                                                             selected = ("Upregulated Genes")),
                                                  actionButton(ns("generateDEGs"), label = "Generate DEG List"),
                                                  h3("Differentially Expressed Genes based on your criteria:"),
                                                  downloadButton(outputId = ns("downloadDEGs"), label = "Download as CSV"),
@@ -238,7 +238,7 @@ NormalisationServer <- function(id) {
 
       if (input$DEGGeneSet == "Upregulated Genes"){finalDEGList <<- sigFoldGenesUp}
       if (input$DEGGeneSet == "Downregulated Genes"){finalDEGList <<- sigFoldGenesDown}
-      else {finalDEGList <<- rbind(sigFoldGenesUp, sigFoldGenesDown)}
+      if (input$DEGGeneSet == "All DEG's"){finalDEGList <<- rbind(sigFoldGenesUp, sigFoldGenesDown)}
       
       finalDEGList
       

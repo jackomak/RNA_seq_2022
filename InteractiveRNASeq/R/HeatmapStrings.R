@@ -28,3 +28,19 @@ tissueValues <- list("Wingdisc", "Salivarygland", "Brain")
 #Select which datasets to intially mark as checked by the GUI.
 initallySelectedTissues <- list("Wingdisc", "Salivarygland", "Brain")
 
+#Function hardcode for individual gene count viewer.
+formatIndividualGenecells <- function(df){
+  df$Genotype <- ifelse(grepl("PtcG4_D6", df$Genotype), "PtcG4_D6",
+                 ifelse(grepl("RasYki_D5", df$Genotype), "RasYki_D5", 
+                 ifelse(grepl("RasYki_D8", df$Genotype), "RasYki_D8",
+                 ifelse(grepl("Fer12OG_D6", df$Genotype), "Fer12OG_D6",
+                 ifelse(grepl("Fer12OG_D8", df$Genotype), "Fer12OG_D8",
+                 ifelse(grepl("Fer12WT_D6", df$Genotype), "Fer12WT_D6",
+                 ifelse(grepl("ImpL2i_D6", df$Genotype), "ImpL2i_D6", 
+                 ifelse(grepl("ImpL2i_D8", df$Genotype), "ImpL2i_D8",
+                 ifelse(grepl("Yw_D5", df$Genotype), "Yw_D5", "Yw_D8")))))))))
+}
+
+#factor levels for individual gene count viewer
+brainLevels <- c("Yw_D5", "RasYki_D5", "RasYki_D8", "ImpL2i_D6", "ImpL2i_D8")
+WDSGLevels <- c("PtcG4_D6", "RasYki_D5", "RasYki_D8", "Fer12OG_D6", "Fer12OG_D8", "Fer12WT_D6", "ImpL2i_D6", "ImpL2i_D8")
